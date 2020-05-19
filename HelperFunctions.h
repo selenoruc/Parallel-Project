@@ -86,3 +86,10 @@ void SkalerDiv(double A, double* B, size_t I, size_t J)
 	}
 }
 
+void Softmax_derivative(double* O, double* D, size_t N)
+{
+	for (size_t i = 0; i < N; i++)
+	{
+		D[i] = O[i] * (1 - O[i]);
+	}
+}

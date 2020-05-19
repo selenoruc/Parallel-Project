@@ -133,9 +133,23 @@ void NeuralNetwork::calcNet_2()
 	Multiply(this->W, this->y, this->Net2, this->NeuronSize_OutLayer, 1, NeuronSize_HiddenLayer + 1);
 }
 
+void NeuralNetwork::calcDelta_o()
+{
+	double* Soft_Diff = new double[this->NeuronSize_OutLayer];
+	// f'(net)
+	Softmax_derivative(this->o, Soft_Diff, this->NeuronSize_OutLayer);
+	// Error = d - o
+	Subtract(this->d, this->o, this->Error, this->NeuronSize_OutLayer, 1);
+	// delta_o = Error .* f'(net)
+	dotProduct(this->Error, Soft_Diff, this->delta_o, this->NeuronSize_OutLayer, 1);
+}
+
 void NeuralNetwork::updateW()
 {
-	Subtract(d, o, Error, this->NeuronSize_OutLayer, 1); // Error = d - o
+	double c = 0.1;
+	
+	Multiply(this->delta_o,this->y,this->dW,this->NeuronSize_OutLayer,)
+
 
 }
 
@@ -153,7 +167,7 @@ void NeuralNetwork::Diff_Softmax()
 {
 	for (size_t i = 0; i < NeuronSize_OutLayer; i++)
 	{
-		delta_o[i] = (o[i] * (1 - o[i])) * Error[i] ;
+		delta_o[i] = (o[i] * (1 - o[i]));
 	}
 }
 

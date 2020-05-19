@@ -25,8 +25,11 @@ public:
 	void ReLU();
 	void calcNet_2();
 	void Softmax();
+	void calcDelta_o();
 	void updateW();
 	void updateV();
+
+
 	void Diff_Softmax();
 	void Diff_ReLU();
 	
