@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <time.h>
 #include "HelperFunctions.h"
 
 using namespace std;
