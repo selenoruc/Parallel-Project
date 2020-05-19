@@ -98,24 +98,15 @@ void NerualNetwork::RandomizeWeights()
 	//V --> 128x785
 	srand(time(0));
 	for( i = 0; i < 128; ++i)
-	{
 	 	for( j = 0;  j < 785; ++j)
-	 	{
-	 		double f = (double)rand() / RAND_MAX;
-			this.V[i][j] = 0 + f * (1 - 0);
-	 	}
-	}
+			this.V[i][j] = (double)rand() / RAND_MAX;
+
 
 	//W --> 10 x 129
 	srand(time(0))
  	for( i = 0; i < 10; ++i)
-	{
 	 	for( j = 0;  j < 129; ++j)
-	 	{
-	 		double f = (double)rand() / RAND_MAX;
-			this.W[i][j] = 0 + f * (1 - 0);
-	 	}
-	 }
+			this.W[i][j] = (double)rand() / RAND_MAX;
 }
 
 
