@@ -103,17 +103,20 @@ void NeuralNetwork::ReadLabels(string Labels)
 
 void NeuralNetwork::RandomizeWeights()
 {
+	size_t AugmentedInputSize = this->InputVectorSize + 1;
+	size_t Augmented_ySize = this->NeuronSize_HiddenLayer + 1;
+
 	//V --> 128x785
 	srand(time(0));
 	for (size_t i = 0; i < this->NeuronSize_HiddenLayer; ++i)
-		for (size_t j = 0; j < (this->InputVectorSize + 1); ++j)
-			this->V[i * 785 + j] = (double)rand() / RAND_MAX;
+		for (size_t j = 0; j < AugmentedInputSize; ++j)
+			this->V[i * AugmentedInputSize + j] = (double)rand() / RAND_MAX;
 
 	//W --> 10 x 129
 	srand(time(0));
 	for (size_t i = 0; i < this->NeuronSize_OutLayer; ++i)
-		for (size_t j = 0; j < (this->NeuronSize_HiddenLayer + 1); ++j)
-			this->W[i * 129 + j] = (double)rand() / RAND_MAX;
+		for (size_t j = 0; j < Augmented_ySize; ++j)
+			this->W[i * Augmented_ySize + j] = (double)rand() / RAND_MAX;
 }
 
 
@@ -159,7 +162,7 @@ void NeuralNetwork::calcNet_2()
 void NeuralNetwork::calcDelta_o()
 {
 	double* Soft_Diff = new double[this->NeuronSize_OutLayer];
-	// f'(net)
+	// f'(net2)
 	Softmax_derivative(this->o, Soft_Diff, this->NeuronSize_OutLayer);
 	// Error = d - o
 	Subtract(this->d, this->o, this->Error, this->NeuronSize_OutLayer, 1);
@@ -179,8 +182,30 @@ void NeuralNetwork::updateW()
 	
 	skalerMul(c, dW, this->NeuronSize_OutLayer, this->NeuronSize_HiddenLayer + 1);
 
-
+	// W += dW
+	Add(this->W, this->dW, this->W, this->NeuronSize_OutLayer, this->NeuronSize_HiddenLayer + 1);
 }
+
+void NeuralNetwork::calcDelta_y()
+{
+	double* ReLU_Diff = new double[this->NeuronSize_HiddenLayer];
+	ReLU_derivative(this->Net1, ReLU_Diff, this->NeuronSize_HiddenLayer);
+
+	// M = W' * delta_o 
+	double* M = new double[this->NeuronSize_HiddenLayer];
+	Multiply(this->W, this->delta_o, M, this->NeuronSize_HiddenLayer, 1, this->NeuronSize_OutLayer);
+	
+	// delta_y = M .* f'(net1)
+	dotProduct(M, ReLU_Diff, this->delta_y, this->NeuronSize_HiddenLayer, 1);
+}
+
+void NeuralNetwork::updateV()
+{
+	double c = 0.1;
+	// dV = c * delta_y * Input
+	//Multiply(this->)
+}
+
 
 void NeuralNetwork::Diff_ReLU()
 {

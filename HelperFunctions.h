@@ -93,3 +93,12 @@ void Softmax_derivative(double* O, double* D, size_t N)
 		D[i] = O[i] * (1 - O[i]);
 	}
 }
+
+
+void ReLU_derivative(double* X, double* D, size_t N)
+{
+	for (size_t i = 0; i < N; i++)
+	{
+		D[i] = (X[i] > 0) ? 1 : 0;
+	}
+}

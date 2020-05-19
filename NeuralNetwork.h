@@ -28,6 +28,7 @@ public:
 	void Softmax();
 	void calcDelta_o();
 	void updateW();
+	void calcDelta_y();
 	void updateV();
 
 
