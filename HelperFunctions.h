@@ -60,7 +60,7 @@ void dotProduct(double* A, double* B, double* C, size_t I, size_t J)
 	}
 }
 
-void skalerMul(double A, double* B, double* C, size_t I, size_t J)
+void skalerMul(double A, double* B, size_t I, size_t J)
 {
 	// Skaler Multiplicaiton : A * B[I][j] = C[I][j]
 
@@ -68,7 +68,7 @@ void skalerMul(double A, double* B, double* C, size_t I, size_t J)
 	{
 		for (size_t j = 0; j < J; j++)
 		{
-			C[i * J + j] = A * B[i * J + j];
+			B[i * J + j] *= A;
 		}
 	}
 }

@@ -86,10 +86,11 @@ void NeuralNetwork::ReadLabels(string Labels)
 {
 	ifstream File;
 	File.open(Labels, ios::in);
-	d[idxSample,]
+	size_t index;
+
 	if (File.is_open())
 	{	
-		for (size_t i = 0; i < TrainingSampleCount; i++){
+		for (size_t i = 0; i < TrainingSampleCount*NeuronSize_OutLayer; i++){
 			d[i]=0;
 		}
 	
@@ -100,20 +101,19 @@ void NeuralNetwork::ReadLabels(string Labels)
 	}
 }
 
-void NerualNetwork::RandomizeWeights()
+void NeuralNetwork::RandomizeWeights()
 {
 	//V --> 128x785
 	srand(time(0));
-	for( i = 0; i < 128; ++i)
-	 	for( j = 0;  j < 785; ++j)
-			this.V[i][j] = (double)rand() / RAND_MAX;
-
+	for (size_t i = 0; i < this->NeuronSize_HiddenLayer; ++i)
+		for (size_t j = 0; j < (this->InputVectorSize + 1); ++j)
+			this->V[i * 785 + j] = (double)rand() / RAND_MAX;
 
 	//W --> 10 x 129
-	srand(time(0))
- 	for( i = 0; i < 10; ++i)
-	 	for( j = 0;  j < 129; ++j)
-			this.W[i][j] = (double)rand() / RAND_MAX;
+	srand(time(0));
+	for (size_t i = 0; i < this->NeuronSize_OutLayer; ++i)
+		for (size_t j = 0; j < (this->NeuronSize_HiddenLayer + 1); ++j)
+			this->W[i * 129 + j] = (double)rand() / RAND_MAX;
 }
 
 
@@ -171,7 +171,13 @@ void NeuralNetwork::updateW()
 {
 	double c = 0.1;
 	
-	Multiply(this->delta_o,this->y,this->dW,this->NeuronSize_OutLayer,)
+	// dw = c * delta_o * y        [I][J]
+	Multiply(this->delta_o, this->y, this->dW, 
+		     this->NeuronSize_OutLayer,          // I = 10
+		     this->NeuronSize_HiddenLayer + 1,   // J = 128 + 1 = 129
+			 1);                                 // K = 1
+	
+	skalerMul(c, dW, this->NeuronSize_OutLayer, this->NeuronSize_HiddenLayer + 1);
 
 
 }
