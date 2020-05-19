@@ -19,6 +19,7 @@ public:
 	NeuralNetwork(size_t HidLayerNeurons, size_t OutLayerNeurons);
 	void ReadTrainingSamples(string SamplesFile);
 	void ReadLabels(string labels);
+	void RandomizeWeights();
 	void NormalizeInput();
 	void calcNet_1();
 	void ReLU();

@@ -120,8 +120,22 @@ void NeuralNetwork::Softmax()
 
 void NeuralNetwork::NormalizeInput()
 {
-
 	SkalerDiv(255.0, Input, this->TrainingSampleCount, this->InputVectorSize);
+}
+
+void NeuralNetwork::calcNet_1()
+{
+	Multiply(this->V, this->Input + idxSample, this->Net1, this->NeuronSize_HiddenLayer, 1, this->InputVectorSize + 1);
+}
+
+void NeuralNetwork::calcNet_2()
+{
+	Multiply(this->W, this->y, this->Net2, this->NeuronSize_OutLayer, 1, NeuronSize_HiddenLayer + 1);
+}
+
+void NeuralNetwork::updateW()
+{
+	Subtract(d, o, Error, this->NeuronSize_OutLayer, 1); // Error = d - o
 
 }
 

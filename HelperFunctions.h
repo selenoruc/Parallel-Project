@@ -81,7 +81,7 @@ void SkalerDiv(double A, double* B, size_t I, size_t J)
 	{
 		for (size_t j = 0; j < J; j++)
 		{
-			B[i * J + j] /= A;
+			B[i * J + j] /=  A;
 		}
 	}
 }
