@@ -86,11 +86,18 @@ void NeuralNetwork::ReadLabels(string Labels)
 {
 	ifstream File;
 	File.open(Labels, ios::in);
-
-	/// TO DO:
-	// Parse Label File :
-	// Fill in     < d >    ( Desired Outputs : Labels )
-
+	d[idxSample,]
+	if (File.is_open())
+	{	
+		for (size_t i = 0; i < TrainingSampleCount; i++){
+			d[i]=0;
+		}
+	
+		for(size_t i = 0; i < TrainingSampleCount; i++){
+			File >> index;
+			this->d[NeuronSize_OutLayer*i+index] = 1;
+		}	
+	}
 }
 
 void NerualNetwork::RandomizeWeights()
