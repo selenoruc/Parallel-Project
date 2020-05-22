@@ -9,18 +9,8 @@ NeuralNetwork::NeuralNetwork()
 	this->TrainingSampleCount		= 0;
 	this->BIAS						= 1;
 	this->idxSample					= 0;
+	this->Erms						= 0.0;
 
-	/*this->Input						= NULL;
-	this->V							= NULL;
-	this->Net1						= NULL;
-	this->y							= NULL;
-	this->W							= NULL;
-	this->Net2						= NULL;
-	this->o							= NULL;
-	this->d							= NULL;
-	this->Error = NULL;
-	this->delta_y = NULL;
-	this->delta_o*/
 }
 
 NeuralNetwork::NeuralNetwork(size_t HidLayerNeurons, size_t OutLayerNeurons)
@@ -31,19 +21,8 @@ NeuralNetwork::NeuralNetwork(size_t HidLayerNeurons, size_t OutLayerNeurons)
 	this->NeuronSize_OutLayer		= OutLayerNeurons;
 	this->BIAS						= 1;
 	this->idxSample					= 0;
+	this->Erms						= 0.0;
 
-	/*
-	this->Input						= new double;
-	this->V							= new double;
-	this->Net1						= new double;
-	this->y							= new double;
-	this->W							= new double;
-	this->Net2						= new double;
-	this->o							= new double;
-	this->d							= new double;
-	this->Error = NULL;
-	this->delta_y = NULL;
-	this->delta_o*/
 }
 
 void NeuralNetwork::ReadTrainingSamples(string SamplesFile)
@@ -61,28 +40,40 @@ void NeuralNetwork::ReadTrainingSamples(string SamplesFile)
 		File >> this->InputVectorSize;
 		File >> this->TrainingSampleCount;
 
-		this->Input			= new double[(InputVectorSize + 1) * TrainingSampleCount];
-		this->V				= new double[(InputVectorSize + 1) * NeuronSize_HiddenLayer];
-		this->dV			= new double[(InputVectorSize + 1) * NeuronSize_HiddenLayer];
-		this->Net1			= new double[NeuronSize_HiddenLayer];
-		this->y				= new double[NeuronSize_HiddenLayer + 1];
-		this->delta_y		= new double[NeuronSize_HiddenLayer];
-		this->W				= new double[(NeuronSize_HiddenLayer + 1) * NeuronSize_OutLayer];
-		this->W				= new double[(NeuronSize_HiddenLayer + 1) * NeuronSize_OutLayer];
-		this->Net2			= new double[NeuronSize_OutLayer];
-		this->o				= new double[NeuronSize_OutLayer];
-		this->delta_o		= new double[NeuronSize_OutLayer];
-		this->d				= new double[TrainingSampleCount * NeuronSize_OutLayer];
-		this->Error			= new double[NeuronSize_OutLayer];
+		this->Input					= new double[(InputVectorSize + 1) * TrainingSampleCount];
+		this->V						= new double[(InputVectorSize + 1) * NeuronSize_HiddenLayer];
+		this->dV					= new double[(InputVectorSize + 1) * NeuronSize_HiddenLayer];
+		this->Net1					= new double[NeuronSize_HiddenLayer];
+		this->y						= new double[NeuronSize_HiddenLayer + 1];
+		this->delta_y				= new double[NeuronSize_HiddenLayer];
+		this->W						= new double[(NeuronSize_HiddenLayer + 1) * NeuronSize_OutLayer];
+		this->dW					= new double[(NeuronSize_HiddenLayer + 1) * NeuronSize_OutLayer];
+		this->Net2					= new double[NeuronSize_OutLayer];
+		this->o						= new double[NeuronSize_OutLayer];
+		this->delta_o				= new double[NeuronSize_OutLayer];
+		this->d						= new double[TrainingSampleCount * NeuronSize_OutLayer];
+		this->Error					= new double[TrainingSampleCount * NeuronSize_OutLayer];
+
+
+		/// TO DO:
+		// Parse rest of the file and fill in    < Input >   array...
+		
+		for (size_t i = 0; i < this->TrainingSampleCount; i++)
+		{
+			for (size_t j = 0; j < this->InputVectorSize; j++)
+			{
+				File >> this->Input[i*(InputVectorSize + 1) + j];
+			}
+			this->Input[i * (InputVectorSize + 1) + InputVectorSize] = this->BIAS;
+		}
+
+
+		File.close();
 	}
-
-	/// TO DO:
-	// Parse rest of the file and fill in    < Input >   array...
-
 
 }
 
-void NeuralNetwork::ReadLabels(string Labels)
+void NeuralNetwork::ReadLabels(std::string Labels)
 {
 	ifstream File;
 	File.open(Labels, ios::in);
@@ -96,9 +87,12 @@ void NeuralNetwork::ReadLabels(string Labels)
 	
 		for(size_t i = 0; i < TrainingSampleCount; i++){
 			File >> index;
-			this->d[NeuronSize_OutLayer*i+index] = 1;
+			this->d[NeuronSize_OutLayer * i + index] = 1;
 		}	
 	}
+
+
+	File.close();
 }
 
 void NeuralNetwork::RandomizeWeights()
@@ -109,14 +103,27 @@ void NeuralNetwork::RandomizeWeights()
 	//V --> 128x785
 	srand(time(0));
 	for (size_t i = 0; i < this->NeuronSize_HiddenLayer; ++i)
+	{
 		for (size_t j = 0; j < AugmentedInputSize; ++j)
-			this->V[i * AugmentedInputSize + j] = (double)rand() / RAND_MAX;
+		{
+			this->V[i * AugmentedInputSize + j] = 2 * ((double)rand() / RAND_MAX) - 1;
+			//cout << V[i * AugmentedInputSize + j] << " ";
+		}
+		//cout << endl;
+	}
 
 	//W --> 10 x 129
 	srand(time(0));
 	for (size_t i = 0; i < this->NeuronSize_OutLayer; ++i)
+	{
 		for (size_t j = 0; j < Augmented_ySize; ++j)
-			this->W[i * Augmented_ySize + j] = (double)rand() / RAND_MAX;
+		{
+			this->W[i * Augmented_ySize + j] = 2 * ((double)rand() / RAND_MAX) - 1;
+			//cout << W[i * Augmented_ySize + j] << " ";
+		}
+		//cout << endl;
+	}
+
 }
 
 
@@ -127,6 +134,11 @@ void NeuralNetwork::ReLU()
 		y[i] = Net1[i] > 0 ? Net1[i] : 0;
 	}
 	y[NeuronSize_HiddenLayer] = this->BIAS;
+	for (size_t i = 0; i < NeuronSize_HiddenLayer+1; i++)
+	{
+		cout << y[i] << endl;
+	}
+
 }
 
 void NeuralNetwork::Softmax()
@@ -151,7 +163,7 @@ void NeuralNetwork::NormalizeInput()
 
 void NeuralNetwork::calcNet_1()
 {
-	Multiply(this->V, this->Input + idxSample, this->Net1, this->NeuronSize_HiddenLayer, 1, this->InputVectorSize + 1);
+	Multiply(this->V, this->Input + idxSample * (InputVectorSize + 1), this->Net1, this->NeuronSize_HiddenLayer, 1, this->InputVectorSize + 1);
 }
 
 void NeuralNetwork::calcNet_2()
@@ -165,9 +177,11 @@ void NeuralNetwork::calcDelta_o()
 	// f'(net2)
 	Softmax_derivative(this->o, Soft_Diff, this->NeuronSize_OutLayer);
 	// Error = d - o
-	Subtract(this->d, this->o, this->Error, this->NeuronSize_OutLayer, 1);
+	Subtract(this->d + idxSample * NeuronSize_OutLayer, this->o, this->Error + idxSample * NeuronSize_OutLayer, this->NeuronSize_OutLayer, 1);
 	// delta_o = Error .* f'(net)
-	dotProduct(this->Error, Soft_Diff, this->delta_o, this->NeuronSize_OutLayer, 1);
+	dotProduct(this->Error + idxSample * NeuronSize_OutLayer, Soft_Diff, this->delta_o, this->NeuronSize_OutLayer, 1);
+
+	delete[] Soft_Diff;
 }
 
 void NeuralNetwork::updateW()
@@ -197,34 +211,47 @@ void NeuralNetwork::calcDelta_y()
 	
 	// delta_y = M .* f'(net1)
 	dotProduct(M, ReLU_Diff, this->delta_y, this->NeuronSize_HiddenLayer, 1);
+
+	delete[] ReLU_Diff;
 }
 
 void NeuralNetwork::updateV()
 {
 	double c = 0.1;
 	// dV = c * delta_y * Input
-	//Multiply(this->)
+	Multiply(this->delta_y, this->Input + idxSample * (InputVectorSize + 1), this->dV, this->NeuronSize_HiddenLayer, this->InputVectorSize + 1, 1);
+	skalerMul(c, this->dV, this->NeuronSize_HiddenLayer, this->InputVectorSize + 1);
+
+	// V += dV
+	Add(this->V, this->dV, this->V, this->NeuronSize_HiddenLayer, this->InputVectorSize + 1);
 }
 
-
-void NeuralNetwork::Diff_ReLU()
+void NeuralNetwork::calcStdError()
 {
-	
-	for (size_t i = 0; i < NeuronSize_HiddenLayer; i++)
-	{
-		delta_y[i] = Net1[i] > 0 ? 1 : 0;
-	}
-	
+	// Error ---> Erms
+	stdError(this->Error, this->Erms, this->TrainingSampleCount, this->NeuronSize_OutLayer);
 }
 
-void NeuralNetwork::Diff_Softmax()
+void NeuralNetwork::Iterate()
 {
-	for (size_t i = 0; i < NeuronSize_OutLayer; i++)
-	{
-		delta_o[i] = (o[i] * (1 - o[i]));
-	}
+	this->calcNet_1();
+	this->ReLU();
+	this->calcNet_2();
+	this->Softmax();
+	this->calcDelta_o();
+	this->updateW();
+	this->calcDelta_y();
+	this->updateV();
+	this->calcStdError();
 }
 
+void NeuralNetwork::printOut()
+{
+	for (size_t i = 0; i < this->NeuronSize_OutLayer; i++)
+	{
+		printf("%f\t%f\n",this->d[i], this->o[i]);
+	}
+}
 
 NeuralNetwork::~NeuralNetwork()
 {
@@ -240,4 +267,5 @@ NeuralNetwork::~NeuralNetwork()
 	delete[] o;
 	delete[] delta_o;
 	delete[] d;
+	delete[] Error;
 }

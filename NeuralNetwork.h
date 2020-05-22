@@ -30,11 +30,12 @@ public:
 	void updateW();
 	void calcDelta_y();
 	void updateV();
+	void calcStdError();
+	void Iterate();
+
+	void printOut();
 
 
-	void Diff_Softmax();
-	void Diff_ReLU();
-	
 private:
 	int	   BIAS;
 	size_t InputVectorSize;			// input vector size
@@ -55,5 +56,6 @@ private:
 	double* delta_o;				// Derivative Softmax
 	double* d;						// Desired Outputs
 	double* Error;					// d-o Vector
+	double  Erms;					// RMS Error (for each CYCLE)
 };
 
