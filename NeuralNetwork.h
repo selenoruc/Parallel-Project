@@ -26,13 +26,16 @@ public:
 	void ReLU();
 	void calcNet_2();
 	void Softmax();
+	void calcError();
+	void calcStdError();
+	void calcTotalError();
 	void calcDelta_o();
 	void updateW();
 	void calcDelta_y();
 	void updateV();
-	void calcStdError();
-	void Iterate();
-
+	void Train();
+	bool isTrained();
+	bool isTrainCompleted();
 	void printOut();
 
 
@@ -57,5 +60,7 @@ private:
 	double* d;						// Desired Outputs
 	double* Error;					// d-o Vector
 	double  Erms;					// RMS Error (for each CYCLE)
+
+	double* outs;
 };
 

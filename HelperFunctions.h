@@ -26,6 +26,21 @@ static void Multiply(double* A, double* B, double* C, size_t I, size_t J, size_t
 }
 
 
+static void Transpose(double* A, double* A_trans, size_t I, size_t J)
+{
+	// A[I][J]  ---->   A_trans[J][I]
+
+	for (size_t i = 0; i < I; i++)
+	{
+		for (size_t j = 0; j < J; j++)
+		{
+			A_trans[j * I + i] = A[i * J + j];
+		}
+	}
+
+}
+
+
 static void Add(double* A, double* B, double* C, size_t I, size_t J)
 {
 	// Addition : A[I][J] + B[I][j] = C[I][j]
@@ -45,7 +60,7 @@ static void Subtract(double* A, double* B, double* C, size_t I, size_t J)
 
 	for (size_t i = 0; i < I; i++)
 	{
-		for (size_t j = 0; j < J; j++)
+ 		for (size_t j = 0; j < J; j++)
 		{
 			C[i * J + j] = A[i * J + j] - B[i * J + j];
 		}
@@ -95,7 +110,7 @@ static void Softmax_derivative(double* O, double* D, size_t N)
 {
 	for (size_t i = 0; i < N; i++)
 	{
-		D[i] = O[i] * (1 - O[i]);
+		D[i] = O[i] * (1.0 - O[i]);
 	}
 }
 
@@ -104,19 +119,61 @@ static void ReLU_derivative(double* X, double* D, size_t N)
 {
 	for (size_t i = 0; i < N; i++)
 	{
-		D[i] = (X[i] > 0) ? 1 : 0;
+		D[i] = (X[i] > 0) ? 1.0 : 0.0;
 	}
 }
 
-static void stdError(double* Error, double& Erms, size_t SampleDim, size_t OutputDim)
+static void stdError(double* Error, double& Erms, size_t OutputDim)
 {
 	double sqSum = 0;
-	size_t N = SampleDim * OutputDim;
+
+	for (size_t i = 0; i < OutputDim; i++)
+	{
+		sqSum += (Error[i] * Error[i]);
+	}
+
+	Erms = sqrt(sqSum) / (double)OutputDim;
+}
+
+static void TotalError(double* Error, double& Erms, size_t OutputDim)
+{
+	Erms = 0;
+
+	for (size_t i = 0; i < OutputDim; i++)
+	{
+		Erms += (Error[i] * Error[i]);//   abs(Error[i]);
+	}
+
+	Erms /= OutputDim;
+}
+
+static void Clean(double* A, size_t N)
+{
+	for (size_t i = 0; i < N; i++)
+	{
+		A[i] =  0.0;
+	}
+}
+
+static void Round(double* A, size_t N)
+{
+	for (size_t i = 0; i < N; i++)
+	{
+		A[i] = round(A[i]);
+	}
+}
+
+
+static void MaxNormalization(double* A, size_t N)
+{
+	double max = A[0];
+	for (size_t i = 1; i < N; i++)
+	{
+		max = (A[i - 1] < A[i]) ? i : i - 1;
+	}
 
 	for (size_t i = 0; i < N; i++)
 	{
-		sqSum += Error[i] * Error[i];
+		A[i] /= max;
 	}
-
-	Erms = sqrt(sqSum) / (double)N;
 }

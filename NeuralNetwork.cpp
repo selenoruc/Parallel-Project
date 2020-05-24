@@ -19,7 +19,7 @@ NeuralNetwork::NeuralNetwork(size_t HidLayerNeurons, size_t OutLayerNeurons)
 	this->TrainingSampleCount		= 0;
 	this->NeuronSize_HiddenLayer	= HidLayerNeurons;
 	this->NeuronSize_OutLayer		= OutLayerNeurons;
-	this->BIAS						= 1;
+	this->BIAS						= -1.0;
 	this->idxSample					= 0;
 	this->Erms						= 0.0;
 
@@ -52,7 +52,7 @@ void NeuralNetwork::ReadTrainingSamples(string SamplesFile)
 		this->o						= new double[NeuronSize_OutLayer];
 		this->delta_o				= new double[NeuronSize_OutLayer];
 		this->d						= new double[TrainingSampleCount * NeuronSize_OutLayer];
-		this->Error					= new double[TrainingSampleCount * NeuronSize_OutLayer];
+		this->Error					= new double[NeuronSize_OutLayer];
 
 
 		/// TO DO:
@@ -131,13 +131,15 @@ void NeuralNetwork::ReLU()
 {
 	for (size_t i = 0; i < NeuronSize_HiddenLayer; i++)
 	{
-		y[i] = Net1[i] > 0 ? Net1[i] : 0;
+  		y[i] = Net1[i] > 0 ? Net1[i] : 0;
 	}
+	MaxNormalization(y, NeuronSize_HiddenLayer);
 	y[NeuronSize_HiddenLayer] = this->BIAS;
-	for (size_t i = 0; i < NeuronSize_HiddenLayer+1; i++)
+
+	/*for (size_t i = 0; i < NeuronSize_HiddenLayer+1; i++)
 	{
 		cout << y[i] << endl;
-	}
+	}*/
 
 }
 
@@ -154,6 +156,7 @@ void NeuralNetwork::Softmax()
 	{
 		o[i] = exp(Net2[i]) / expSUM;
 	}
+
 }
 
 void NeuralNetwork::NormalizeInput()
@@ -163,12 +166,24 @@ void NeuralNetwork::NormalizeInput()
 
 void NeuralNetwork::calcNet_1()
 {
-	Multiply(this->V, this->Input + idxSample * (InputVectorSize + 1), this->Net1, this->NeuronSize_HiddenLayer, 1, this->InputVectorSize + 1);
+	Multiply(this->V, this->Input + idxSample * (InputVectorSize + 1), this->Net1,
+		     this->NeuronSize_HiddenLayer,
+		     1, 
+			 this->InputVectorSize + 1);
 }
 
 void NeuralNetwork::calcNet_2()
 {
-	Multiply(this->W, this->y, this->Net2, this->NeuronSize_OutLayer, 1, NeuronSize_HiddenLayer + 1);
+	Multiply(this->W, this->y, this->Net2,
+			 this->NeuronSize_OutLayer, 
+			 1, 
+			 NeuronSize_HiddenLayer + 1);
+}
+
+void NeuralNetwork::calcError()
+{
+	// Error = d - o
+	Subtract(this->d + idxSample * NeuronSize_OutLayer, this->o, this->Error, this->NeuronSize_OutLayer, 1);
 }
 
 void NeuralNetwork::calcDelta_o()
@@ -177,19 +192,18 @@ void NeuralNetwork::calcDelta_o()
 	// f'(net2)
 	Softmax_derivative(this->o, Soft_Diff, this->NeuronSize_OutLayer);
 	// Error = d - o
-	Subtract(this->d + idxSample * NeuronSize_OutLayer, this->o, this->Error + idxSample * NeuronSize_OutLayer, this->NeuronSize_OutLayer, 1);
-	// delta_o = Error .* f'(net)
-	dotProduct(this->Error + idxSample * NeuronSize_OutLayer, Soft_Diff, this->delta_o, this->NeuronSize_OutLayer, 1);
+	//// delta_o = Error .* f'(net)
+	dotProduct(this->Error, Soft_Diff, this->delta_o, this->NeuronSize_OutLayer, 1);
 
 	delete[] Soft_Diff;
 }
 
 void NeuralNetwork::updateW()
 {
-	double c = 0.1;
+	double c = 0.9;
 	
 	// dw = c * delta_o * y        [I][J]
-	Multiply(this->delta_o, this->y, this->dW, 
+	Multiply(this->delta_o/*Error*/, this->y, this->dW, 
 		     this->NeuronSize_OutLayer,          // I = 10
 		     this->NeuronSize_HiddenLayer + 1,   // J = 128 + 1 = 129
 			 1);                                 // K = 1
@@ -205,21 +219,28 @@ void NeuralNetwork::calcDelta_y()
 	double* ReLU_Diff = new double[this->NeuronSize_HiddenLayer];
 	ReLU_derivative(this->Net1, ReLU_Diff, this->NeuronSize_HiddenLayer);
 
+	// W --> W'      10x128 ---> 128x10
+	double* W_t = new double[this->NeuronSize_OutLayer * this->NeuronSize_HiddenLayer];
+	Transpose(this->W, W_t, this->NeuronSize_OutLayer, this->NeuronSize_HiddenLayer);
 	// M = W' * delta_o 
 	double* M = new double[this->NeuronSize_HiddenLayer];
-	Multiply(this->W, this->delta_o, M, this->NeuronSize_HiddenLayer, 1, this->NeuronSize_OutLayer);
+	Multiply(W_t, this->delta_o, M, this->NeuronSize_HiddenLayer, 1, this->NeuronSize_OutLayer);
 	
 	// delta_y = M .* f'(net1)
 	dotProduct(M, ReLU_Diff, this->delta_y, this->NeuronSize_HiddenLayer, 1);
-
+	 
 	delete[] ReLU_Diff;
 }
 
 void NeuralNetwork::updateV()
 {
-	double c = 0.1;
+	double c = 0.3;
 	// dV = c * delta_y * Input
-	Multiply(this->delta_y, this->Input + idxSample * (InputVectorSize + 1), this->dV, this->NeuronSize_HiddenLayer, this->InputVectorSize + 1, 1);
+	Multiply(this->delta_y, this->Input + idxSample * (InputVectorSize + 1), this->dV,
+			 this->NeuronSize_HiddenLayer,
+			 this->InputVectorSize + 1,
+			 1);
+
 	skalerMul(c, this->dV, this->NeuronSize_HiddenLayer, this->InputVectorSize + 1);
 
 	// V += dV
@@ -229,20 +250,54 @@ void NeuralNetwork::updateV()
 void NeuralNetwork::calcStdError()
 {
 	// Error ---> Erms
-	stdError(this->Error, this->Erms, this->TrainingSampleCount, this->NeuronSize_OutLayer);
+	stdError(this->Error, this->Erms, this->NeuronSize_OutLayer);
 }
 
-void NeuralNetwork::Iterate()
+void NeuralNetwork::calcTotalError()
 {
-	this->calcNet_1();
-	this->ReLU();
-	this->calcNet_2();
-	this->Softmax();
-	this->calcDelta_o();
-	this->updateW();
-	this->calcDelta_y();
-	this->updateV();
-	this->calcStdError();
+	TotalError(this->Error, this->Erms, this->NeuronSize_OutLayer);
+}
+
+void NeuralNetwork::Train()
+{
+	size_t counter;
+
+	for (this->idxSample = 0; this->idxSample < this->TrainingSampleCount; this->idxSample++)
+	{
+		counter = 0;
+		while (true)
+		{
+			this->calcNet_1();
+			this->ReLU();
+			this->calcNet_2();
+			this->Softmax();
+			this->calcError();
+			//this->calcStdError();
+			this->calcTotalError();
+			if (isTrained())
+			{
+				cout << "idxSample: " << idxSample << " Erms: " << this->Erms << " Cycle: " << counter << endl;
+				/* (size_t i = 0; i < 10; i++)
+				{
+					cout << "idxSample: " << idxSample << " Target: " << this->d[idxSample * 10 + i]
+						<< " Out: " << this->o[i] << " Erms: " << this->Erms << endl;
+				}*/
+				break;
+			}
+			this->calcDelta_o();
+			this->calcDelta_y();
+			this->updateW();
+			this->updateV();
+			++counter;
+			//cout << "idxSample: " << idxSample << " Erms: " << this->Erms << endl;
+			/*for (size_t i = 0; i < 10; i++)
+			{
+				cout << "idxSample: " << idxSample << " Target: " << this->d[idxSample*10 + i] 
+					 << " Out: " << this->o[i] << " Erms: " << this->Erms << endl;
+			}*/
+			
+		}
+	}
 }
 
 void NeuralNetwork::printOut()
@@ -251,6 +306,16 @@ void NeuralNetwork::printOut()
 	{
 		printf("%f\t%f\n",this->d[i], this->o[i]);
 	}
+}
+
+bool NeuralNetwork::isTrained()
+{
+	return Erms < 0.00001;
+}
+
+bool NeuralNetwork::isTrainCompleted()
+{
+	return this->idxSample == this->TrainingSampleCount;
 }
 
 NeuralNetwork::~NeuralNetwork()
