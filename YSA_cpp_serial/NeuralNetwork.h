@@ -37,6 +37,8 @@ public:
 	bool isTrained();
 	bool isTrainCompleted();
 	void printOut();
+	void ShuffleIdx();
+	void Test();
 
 
 private:
@@ -46,6 +48,10 @@ private:
 	size_t NeuronSize_HiddenLayer;	// Neuron Size Hidden Layer
 	size_t NeuronSize_OutLayer;		// Neuron Size Output Layer
 	size_t idxSample;				// Sample idx
+	size_t sizeTrain;               // Dedicated Training Sample Count %67
+	size_t sizeTest;				// Dedicated Test Sample Count %33
+	size_t SuccessCount;			// Successful Tests
+
 	double* Input;					// All Training Inputs [inputvectorsize x TrainingSampleCount]
 	double* V;						// Hidden Layer Weights
 	double* dV;
@@ -61,6 +67,11 @@ private:
 	double* Error;					// d-o Vector
 	double  Erms;					// RMS Error (for each CYCLE)
 
-	double* outs;
+
+
+	size_t* idxShuffled;			// Shuffled indice
+	size_t* Labels;					// Labels
+	size_t* Predictions;			// Outputs
+	//double* outs;
 };
 
