@@ -76,5 +76,5 @@ $ g++ -o seri .\main.cpp .\NeuralNetwork.cpp
 Paralel derleme için;
 ```
 # cd .\YSA_cpp_OMP_parallelized
-$ g++ -O -Wall -std=c++0x -g -fopenmp -o paralel_10_bin .\main.cpp .\NeuralNetwork.cpp
+$ g++ -O -Wall -std=c++0x -g -fopenmp -o paralel .\main.cpp .\NeuralNetwork.cpp
 ```
